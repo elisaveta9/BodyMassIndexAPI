@@ -11,5 +11,7 @@ namespace BodyMassIndexAPI.Database.Entityes
         public string Surname { get; set; }
 
         public string? Patronymic { get; set; }
+
+        public Details Details { get; set; }
     }
 }

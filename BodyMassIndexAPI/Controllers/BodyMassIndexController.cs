@@ -32,6 +32,7 @@ namespace BodyMassIndexAPI.Controllers
             double result = weight / (height * height);
             if (result < 5 || result > 200) 
                 throw new ArgumentException("Введенные данные неверны.");
+            height /= 100;
             return result;
         }
 
@@ -81,14 +82,20 @@ namespace BodyMassIndexAPI.Controllers
             if (String.IsNullOrEmpty(patronymic)) //отчество может отсутствовать
                 patronymic = "";
 
-            Person person = new() { Name = name, Surname = surname, Patronymic = patronymic };
-            Details detailsPerson = new() { Person =  person, Height = height, Weight = weight, 
-                BirthDate = new DateOnly(BirthDate.Year, BirthDate.Month, BirthDate.Day), BMI = Bmi };
+
+            Details detailsPerson = new()
+            {
+                Height = height,
+                Weight = weight,
+                BirthDate = new DateOnly(BirthDate.Year, BirthDate.Month, BirthDate.Day),
+                BMI = Bmi
+            };
+            Person person = new() { Name = name, Surname = surname, Patronymic = patronymic, Details = detailsPerson };
 
             try
             {
-                personRepository.Add(person);
                 detailsRepository.Add(detailsPerson);
+                personRepository.Add(person);
                 return Ok();
             }
             catch

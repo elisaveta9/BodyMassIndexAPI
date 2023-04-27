@@ -6,8 +6,6 @@ namespace BodyMassIndexAPI.Database.Entityes
     {
         public override int Id { get; }
 
-        public Person Person { get; set; }
-
         public double Height { get; set; }
 
         public double Weight { get; set; }
