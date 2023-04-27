@@ -32,7 +32,6 @@ namespace BodyMassIndexAPI.Controllers
             double result = weight / (height * height);
             if (result < 5 || result > 200) 
                 throw new ArgumentException("Введенные данные неверны.");
-            height /= 100;
             return result;
         }
 
@@ -62,7 +61,7 @@ namespace BodyMassIndexAPI.Controllers
         }
 
         [HttpGet]
-        public BodyMassIndex GetBmi(double height, double weight) => new() { Height = height * 100.0, Weight = weight, BMI = GetBmIndex(height, weight) };        
+        public BodyMassIndex GetBmi(double height, double weight) => new() { Height = height, Weight = weight, BMI = GetBmIndex(height, weight) };        
 
         [HttpPost]
         public IActionResult Post(string surname, string name, string patronymic, string birthDate, double height, double weight)
