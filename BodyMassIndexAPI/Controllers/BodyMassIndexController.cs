@@ -1,4 +1,5 @@
 ﻿using BodyMassIndexAPI.Database;
+using BodyMassIndexAPI.Database.Context;
 using BodyMassIndexAPI.Database.Entityes;
 using BodyMassIndexAPI.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,15 @@ namespace BodyMassIndexAPI.Controllers
             { 18.5, "Недостаточная масса тела" }, { 25, "Норма" }, { 30, "Избыточная масса тела" },                     //проверяем по верхней границе
             { 35, "Ожирение 1 степени" }, { 40, "Ожирение 2 степени" }, { 200, "Ожирение 3 степени" } };                //верхняя граница не включается в диапазон
 
-        private CultureInfo provider = new("ru-RU");
+        private readonly CultureInfo provider = new("ru-RU");
 
         private readonly ILogger<BodyMassIndexController> _logger;
 
-        private readonly DetailsRepository detailsRepository = new(new Database.Context.UsersDB());
-        
-        private readonly IRepository<Person> personRepository = new Repository<Person>(new Database.Context.UsersDB());
+        private readonly DetailsRepository detailsRepository;
 
-        private double GetBmIndex(double height, double weight) //эта функция используется в двух вызовах и поэтому выделена отдельно
+        private readonly IRepository<Person> personRepository;
+
+        private static double GetBmIndex(double height, double weight) //эта функция используется в двух вызовах и поэтому выделена отдельно
         {
             if ((height < 44 || height > 251) || (weight < 2 || weight > 500)) //проверяем на адекватные значения
                 throw new ArgumentException("Введенные данные вне выделенного диапазона. Введите сначала рост в см., а потом вес в кг.");
@@ -35,16 +36,16 @@ namespace BodyMassIndexAPI.Controllers
             return result;
         }
 
-        private IList<string> GetStatistic(IEnumerable<Details> details) //эта функция используется в двух вызовах и поэтому выделена отдельно
+        private static IList<string> GetStatistic(IEnumerable<Details> details) //эта функция используется в двух вызовах и поэтому выделена отдельно
         {                                                                //она подсчитывает статистику в в заданном множестве 
             List<StatisticsBMI> statistics = new();
             int countAllUsers = details.Count();
             foreach (Details detail in details) 
             {
                 StatisticsBMI statisticsBMI = new() { BmiResult = bmiResult.Where(item => item.Key > detail.BMI).First().Value, Count = 1 }; //создаем экземпляр для статистики
-                                                                                                  //интерпретаций ИМТ и количество элементов для интерпритации считаем равным 1
+                                                                                                  //интерпретаций ИМТ и количество элементов для интерпретации считаем равным 1
                 var element = statistics.Where(item => item.BmiResult == statisticsBMI.BmiResult);
-                if (element.Count() == 0)
+                if (!element.Any())
                     statistics.Add(statisticsBMI); //если в списке нет этой интерпретации, то добавляем ее
                 else element.First().Count++; //если уже существует, то количество этой интерпретации больше на одну
             }
@@ -58,6 +59,9 @@ namespace BodyMassIndexAPI.Controllers
         public BodyMassIndexController(ILogger<BodyMassIndexController> logger)
         {
             _logger = logger;
+            UsersDB _db = new();
+            detailsRepository = new(_db);
+            personRepository = new Repository<Person>(_db);
         }
 
         [HttpGet]
@@ -98,7 +102,7 @@ namespace BodyMassIndexAPI.Controllers
             {
                 detailsRepository.Add(detailsPerson);
                 personRepository.Add(person);
-                return Ok();
+                return RedirectToAction("Index");
             }
             catch
             {
@@ -117,7 +121,7 @@ namespace BodyMassIndexAPI.Controllers
             while (count < countAllElements) //пока не проверили все элементы из БД
             {
                 var group = detailsRepository.GetDetailsInRangeAge(startAge, endAge); //получаем группу для возрастов от startAge до endAge, включая endAge
-                if (group.Count() > 0) //если групп не пустая, то
+                if (group.Any()) //если групп не пустая, то
                 {
                     var groupResult = GetStatistic(group); //получаем статистику для полученной раннее группы
                     result.Add($"Диапазон возрастов от {startAge} до {endAge}", groupResult); //добавляем результат к словарю

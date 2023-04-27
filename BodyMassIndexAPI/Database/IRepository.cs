@@ -2,7 +2,7 @@
 
 namespace BodyMassIndexAPI.Database
 {
-    internal interface IRepository<T> where T : Entity
+    internal interface IRepository<T> : IDisposable where T : Entity
     {
         IEnumerable<T> GetAll();
 
